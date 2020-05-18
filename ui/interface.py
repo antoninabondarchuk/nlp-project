@@ -1,6 +1,9 @@
 from tkinter import Tk, ttk, filedialog, Text, END
+
+import nltk
+
 from collocations.find_collocations import collocations_stage
-from preparation import preparation_stage
+from preparation import get_raw_path, read_write_several_dir
 
 FONT = '-*-lucidatypewriter-medium-r-*-*-*-140-*-*-*-*-*-*'
 
@@ -20,15 +23,16 @@ class Root(Tk):
                                          style='W.TLabelframe')
         self.labelFrame.grid(column=0, row=1, padx=20, pady=20)
         self.filename = None
-        self.dir_to_write = None
+        self.w_filename = None
 
         self.display_browse_button()
+        nltk.download('punkt')
+        nltk.download('averaged_perceptron_tagger')
 
     def display_browse_button(self):
-        self.browse_button = ttk.Button(self.labelFrame,
-                                        text="Browse A Directory",
-                                        command=self.file_dialog,
-                                        style='W.TButton')
+        self.browse_button = ttk.Button(
+            self.labelFrame, text="Browse A Directory To Read",
+            command=self.read_file_dialog, style='W.TButton')
         self.browse_button.grid(column=1, row=1)
 
     def read_file_dialog(self):
@@ -36,18 +40,32 @@ class Root(Tk):
         self.label = ttk.Label(self.labelFrame, text="",
                                style='W.TLabelframe.Label')
         self.label.grid(column=1, row=2)
-        self.label.configure(text=self.filename)
-        self.filename = preparation_stage(self.filename)
-        self.result_field = Text(self, height=5, width=50)
-        self.result_field.grid(row=8, column=3, columnspan=6)
-        self.display_collocations_button()
+        self.label.configure(text=f'From: {self.filename}')
+        self.filename = get_raw_path(self.filename)
+        self.display_browse_write_button()
+
+    def display_browse_write_button(self):
+        self.browse_write_button = ttk.Button(
+            self.labelFrame, text="Browse A Directory To Write",
+            command=self.write_file_dialog, style='W.TButton')
+        self.browse_write_button.grid(column=3, row=1)
 
     def write_file_dialog(self):
-        self.dir_to_write = None
-        # implement as below, think about logic
+        self.w_filename = filedialog.askdirectory(title="Select A File")
+        self.w_label = ttk.Label(self.labelFrame, text="",
+                                 style='W.TLabelframe.Label')
+        self.w_label.grid(column=1, row=3)
+        self.w_label.configure(text=f'To: {self.w_filename}')
+        self.w_filename = get_raw_path(self.w_filename)
+        self.concatenated = read_write_several_dir(self.filename,
+                                                   self.w_filename)
+        self.result_field = Text(self, height=25, width=75)
+        self.result_field.grid(row=8, column=0, columnspan=6)
+        self.display_collocations_button()
 
     def collocations(self):
-        text_to_show = collocations_stage(self.filename, )
+        text_to_show = collocations_stage(self.concatenated,
+                                          self.w_filename)
         self.result_field.insert(END, 'Collocations found: \n')
         self.result_field.insert(END, text_to_show + '\n')
 

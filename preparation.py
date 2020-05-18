@@ -26,21 +26,21 @@ def get_raw_path(path):
         print(f"{e}\n", file=sys.stderr)
 
 
-def read_several_from_dir(directory_path):
+def read_write_several_dir(read_path, write_path):
     """
     Reads from directory all .txt files and merges them to one.
     Placed in the input directory with name concatenated.txt.
     Args:
-        directory_path (str): raw absolute path to the folder with .txt
+        read_path (str): raw absolute path to the folder with .txt
             files to read from.
+        write_path (str): raw absolute path to the folder with .txt
+            files to write.
 
     Returns:
         Absolute raw path to the concatenated text file as String.
     """
-    if not directory_path:
-        pass
-    read_files = glob.glob(f'{directory_path}*.txt')
-    concatenated_file_dir = f'{directory_path}concatenated.txt'
+    read_files = glob.glob(f'{read_path}*.txt')
+    concatenated_file_dir = f'{write_path}concatenated.txt'
 
     with open(concatenated_file_dir, 'wb') as outfile:
         for f in read_files:
@@ -49,34 +49,18 @@ def read_several_from_dir(directory_path):
     return concatenated_file_dir
 
 
-def preparation_stage(input_path):
-    """
-    Includes checking input path to be valid and merging input .txt
-    files into concatenated.txt file.
-    Args:
-        input_path (str): raw absolute path to the folder with .txt
-            files to read from.
-
-    Returns:
-        Absolute raw path to the concatenated text file as String.
-    """
-    raw_dir_path = get_raw_path(input_path)
-    file_path_to_work = read_several_from_dir(raw_dir_path)
-    return file_path_to_work
-
-
 def collocations_format(collocations):
     """
     Converts pairs of collocations data into string format to display
     and write into .txt file.
     Args:
-        collocations (list): tuples of words(strings)-collocations,
+        collocations (tuple): tuples of words(strings)-collocations,
             each with POS.
 
     Returns:
         String.
     """
-    pass
+
 
 
 def write_to_txt_file(str_to_write, dir_to_write):
