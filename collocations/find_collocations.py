@@ -9,10 +9,11 @@ from pprint import pprint
 EMPTY_TEXT_ERROR_MESSAGE = '''Chosen directory contains empty .txt 
     files. Please, fill them with text or choose another directory.'''
 CHUNK_POS = ('CC', 'TO', 'IN', '.', ')', '(', ',', ':', ';', 'CD', 'DT',
-             'POS', 'PDT', 'RP', 'UH', 'WDT', 'WP', 'WP$', 'WRB', '-', 'AT')
+             'POS', 'PDT', 'RP', 'UH', 'WDT', 'WP', 'WP$', 'WRB', '-',
+             'AT')
 
 
-def tokenize_and_tag(text):
+def tokenize(text):
     """
     Split lowercase text into tokens and words with pos tags.
     Attention: USES SPELLCHECKER.
@@ -20,11 +21,17 @@ def tokenize_and_tag(text):
         text (str): lowercase text to work on.
 
     Returns:
-        List of tokens, list of word-pos pairs.
+        List of tokens, dict of word-pos pairs.
     """
-    tokens = nltk.word_tokenize(text)
-    tagged = nltk.pos_tag(tokens)
-    return tokens, tagged
+    tagger = treetaggerwrapper.TreeTagger(TAGLANG='en')
+    tags = tagger.tag_text(text)
+    tags = treetaggerwrapper.make_tags(tags)
+    tag_dict = {tag.word: tag.pos
+                for tag in tags
+                if isinstance(tag, treetaggerwrapper.Tag)}
+    tokens = [tag.word for tag in tags
+              if isinstance(tag, treetaggerwrapper.Tag)]
+    return tokens, tag_dict
 
 
 def filter_chunk(word):
@@ -40,7 +47,8 @@ def filter_chunk(word):
         Boolean.
     """
     tagged_word = nltk.pos_tag([word, ])[0]
-    if tagged_word[1] in CHUNK_POS or '.' in tagged_word[0]:
+    if (tagged_word[1] in CHUNK_POS or '.' in tagged_word[0]
+            or '”' in tagged_word[0]):
         return True
     return False
 
@@ -64,10 +72,10 @@ def split_collocations(collocations_pmi, tagged_words):
     for collocation, pmi in collocations_pmi:
         pos_first = tagged_words[collocation[0]]
         pos_second = tagged_words[collocation[1]]
-        if ((pos_first.startswith('VB') and pos_second.startswith('NN'))
-            or (pos_second.startswith('VB')
+        if ((pos_first.startswith('VV') and pos_second.startswith('NN'))
+            or (pos_second.startswith('VV')
                 and pos_first.startswith('NN'))):
-            verb_noun_pair = ((collocation if pos_first.startswith('VB')
+            verb_noun_pair = ((collocation if pos_first.startswith('VV')
                               else collocation[::-1]), pmi)
             verb_noun.append(verb_noun_pair)
 
@@ -75,14 +83,13 @@ def split_collocations(collocations_pmi, tagged_words):
               and pos_second.startswith('NN')):
             noun_noun.append((collocation, pmi))
 
-        elif ((pos_first.startswith('JJ')
+        elif ((pos_first.startswith('AJ')
               and pos_second.startswith('NN'))
               or (pos_first.startswith('NN')
-                  and pos_second.startswith('JJ'))):
+                  and pos_second.startswith('AJ'))):
             noun_adj_pair = ((collocation if pos_first.startswith('NN')
                              else collocation[::-1], pmi))
             noun_adj.append(noun_adj_pair)
-    pprint(noun_noun)
     return verb_noun, noun_noun, noun_adj
 
 
@@ -118,16 +125,10 @@ def collocations_stage(work_file, dir_to_write):
     if not text:
         return EMPTY_TEXT_ERROR_MESSAGE
     lower_case_text = text.lower()
-    tagger = treetaggerwrapper.TreeTagger(TAGLANG='en')
-    tags = tagger.tag_text(lower_case_text)
-    tags2 = treetaggerwrapper.make_tags(tags)
-    pprint(tags2)
 
-    tokens, tagged_words_list = tokenize_and_tag(lower_case_text)
-    tagged_words = dict(tagged_words_list)
+    tokens, tagged = tokenize(lower_case_text)
     collocations_pmi = get_collocations(tokens)
-    collocations_list = split_collocations(collocations_pmi,
-                                           tagged_words)
+    collocations_list = split_collocations(collocations_pmi, tagged)
     result_str = collocations_format(collocations_list)
     write_to_txt_file(result_str, dir_to_write)
 

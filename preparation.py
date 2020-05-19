@@ -3,6 +3,7 @@ import os
 import platform
 import sys
 from pathvalidate import ValidationError, validate_pathtype
+from prettytable import PrettyTable
 
 
 def get_raw_path(path):
@@ -55,12 +56,24 @@ def collocations_format(collocations):
     and write into .txt file.
     Args:
         collocations (tuple): tuples of words(strings)-collocations,
-            each with POS.
+            by POS pairs with PMI.
 
     Returns:
         String.
     """
-
+    result_str = '\n'
+    headers = [['Headword (Verb)', 'Collocate (Noun)', 'PMI'],
+               ['Headword (Noun)', 'Collocate (Noun)', 'PMI'],
+               ['Headword (Noun)', 'Collocate (Adjective)', 'PMI']]
+    types = ['Verbal', 'Substantive (Objective)',
+             'Substantive (Attribute)']
+    for i, table in enumerate(collocations):
+        result_str += types[i] + '\n \n'
+        t = PrettyTable(headers[i])
+        for coll in table:
+            t.add_row([*coll[0], round(coll[1], 5)])
+        result_str += str(t) + '\n \n'
+    return result_str
 
 
 def write_to_txt_file(str_to_write, dir_to_write):
@@ -72,4 +85,6 @@ def write_to_txt_file(str_to_write, dir_to_write):
     Returns:
         None.
     """
-    pass
+    with open(f'{dir_to_write}collocations.txt', 'w',
+              encoding='windows-1251') as f:
+        f.write(str_to_write)
