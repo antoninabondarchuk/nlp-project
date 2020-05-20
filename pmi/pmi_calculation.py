@@ -20,5 +20,5 @@ def get_pmi(gram_count, each_count, all_count):
     p_w1 = w1 / all_count
     p_w2 = w2 / all_count
     p_gram = gram_count / all_count if gram_count else 0
-    pmi = math.log2(p_gram / p_w1 * p_w2)
+    pmi = math.log2(p_gram / (p_w1 * p_w2))
     return pmi
